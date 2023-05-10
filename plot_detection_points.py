@@ -1,5 +1,9 @@
 import json
 import matplotlib.pyplot as plt
+import os
+
+os.makedirs('out', exist_ok=True)
+os.makedirs('img', exist_ok=True)
 
 with open('out/detection_points.json', 'r') as json_file:
     detection_points_data = json.load(json_file)
