@@ -2,6 +2,23 @@ import pythia8
 import json
 import numpy as np
 
+
+'''
+Pythia coordinate axes convention:
+The cylinder axis is in z direction(+z outside of screen), +ve x axis to the right , +ve y axis upwards
+        y
+        ^
+        |
+        |
+        |
+        |
+        o - ---> x
+      /
+     /
+    /
+   z
+'''
+
 def cylinder_intersection(trajectory, cylinder_radius, cylinder_height):
     # Check if the trajectory has at least two points
     if len(trajectory) < 2:
@@ -12,16 +29,13 @@ def cylinder_intersection(trajectory, cylinder_radius, cylinder_height):
     particle_vel = trajectory[-1] - particle_pos
 
 
-    # These are the coefficients for a vertical cylinder
+    # These are the coefficients for a cylinder whose axis is in z direction(+z outside of screen) ,
+    # +ve x axis to the right , +ve y axis upwards
     # Calculate the coefficients for the quadratic equation
-    # a = particle_vel.dot(particle_vel) - (particle_vel[2] ** 2)
-    # b = 2 * (particle_pos.dot(particle_vel) - cylinder_radius * particle_vel[0] - cylinder_radius * particle_vel[1])
-    # c = particle_pos.dot(particle_pos) - (cylinder_radius**2) - (particle_pos[2] - cylinder_height/2)**2
+    a = particle_vel.dot(particle_vel) - (particle_vel[2] ** 2)
+    b = 2 * (particle_pos.dot(particle_vel) - cylinder_radius * particle_vel[0] - cylinder_radius * particle_vel[1])
+    c = particle_pos.dot(particle_pos) - (cylinder_radius**2) - (particle_pos[2] - cylinder_height/2)**2
 
-    # These are the coefficients for a horizontal cylinder
-    a = particle_vel.dot(particle_vel) - (particle_vel[0] ** 2)
-    b = 2 * (particle_pos.dot(particle_vel) - cylinder_radius * particle_vel[1] - cylinder_radius * particle_vel[2])
-    c = particle_pos.dot(particle_pos) - (cylinder_radius ** 2) - (particle_pos[1] - cylinder_height / 2) ** 2
 
     # Calculate the solutions to the quadratic equation
     discriminant = b**2 - 4*a*c
