@@ -2,7 +2,6 @@ import pythia8
 import json
 import numpy as np
 
-
 '''
 Pythia coordinate axes convention:
 The cylinder axis is in z direction(+z outside of screen), +ve x axis to the right , +ve y axis upwards
@@ -19,41 +18,41 @@ The cylinder axis is in z direction(+z outside of screen), +ve x axis to the rig
    z
 '''
 
+
 def cylinder_intersection(trajectory, cylinder_radius, cylinder_height):
-    # Check if the trajectory has at least two points
-    if len(trajectory) < 2:
-        return None
+    # assuming coordinate system: y - vertical, x - horizotal, z - beam direction
 
-    # Calculate the velocity of the particle
-    particle_pos = trajectory[-2]
-    particle_vel = trajectory[-1] - particle_pos
+    # equation of line in x-y plane: y = ax + b
+    a = (trajectory[-1][1] - trajectory[0][1]) / (trajectory[-1][0] - trajectory[0][0])
+    b = trajectory[0][1] - a * trajectory[0][0]
+    # equation of cylinder in x-y: x^2 + y^2 = r
+    # intersection of cylinder and line in x-y: (a^2+1)x^2 + 2abx + b^2-r^2 = 0 -> Ax^2 + Bx + C = 0
+    A = a ** 2 + 1
+    B = 2 * a * b
+    C = b ** 2 - cylinder_radius ** 2
 
-
-    # These are the coefficients for a cylinder whose axis is in z direction(+z outside of screen) ,
-    # +ve x axis to the right , +ve y axis upwards
-    # Calculate the coefficients for the quadratic equation
-    a = particle_vel.dot(particle_vel) - (particle_vel[2] ** 2)
-    b = 2 * (particle_pos.dot(particle_vel) - cylinder_radius * particle_vel[0] - cylinder_radius * particle_vel[1])
-    c = particle_pos.dot(particle_pos) - (cylinder_radius**2) - (particle_pos[2] - cylinder_height/2)**2
-
-
-    # Calculate the solutions to the quadratic equation
-    discriminant = b**2 - 4*a*c
-    if discriminant < 0:
+    delta = B ** 2 - 4 * A * C
+    x = 0
+    if delta < 0:
         raise ValueError("Particle trajectory does not intersect cylinder")
-    elif discriminant == 0:
-        t = -b / (2*a)
-        intersection_point = particle_pos + t * particle_vel
-        return intersection_point
+    elif delta == 0:
+        x = -1 * B / (2 * A)
     else:
-        t1 = (-b + np.sqrt(discriminant)) / (2*a)
-        t2 = (-b - np.sqrt(discriminant)) / (2*a)
+        x = (-1 * B + np.sqrt(delta)) / (2 * A)
+        if (trajectory[-1][0] - trajectory[0][0] < 0 and x > 0):
+            x = (-1 * B - np.sqrt(delta)) / (2 * A)
+        if (trajectory[-1][0] - trajectory[0][0] > 0 and x < 0):
+            x = (-1 * B - np.sqrt(delta)) / (2 * A)
 
-        # Select the intersection point that is closest to the particle position
-        intersection_points = [particle_pos + t1 * particle_vel, particle_pos + t2 * particle_vel]
-        distances = [np.linalg.norm(intersection_points[0] - particle_pos), np.linalg.norm(intersection_points[1] - particle_pos)]
-        closest_index = np.argmin(distances)
-        return intersection_points[closest_index]
+    y = a * x + b
+
+    # equation of trajectory in y-z plane: y = cz + d
+    c = (trajectory[-1][1] - trajectory[0][1]) / (trajectory[-1][2] - trajectory[0][2])
+    d = trajectory[0][1] - a * trajectory[0][2]
+
+    z = (y - d) / c
+
+    return [x, y, z]
 
 
 def calculate_trajectories(pythia, nsteps, ntot_particles):
@@ -71,9 +70,9 @@ def calculate_trajectories(pythia, nsteps, ntot_particles):
         particle = pythia.event[i]
         if particle.isFinal() and particle.isCharged():
             p = particle.p()
-            x[i][0] = particle.xProd()*1e-3 # Convert mm/c to m/s
-            y[i][0] = particle.yProd()*1e-3
-            z[i][0] = particle.zProd()*1e-3
+            x[i][0] = particle.xProd() * 1e-3  # Convert mm/c to m/s
+            y[i][0] = particle.yProd() * 1e-3
+            z[i][0] = particle.zProd() * 1e-3
             px[i][0] = p.px()
             py[i][0] = p.py()
             pz[i][0] = p.pz()
@@ -87,7 +86,6 @@ def calculate_trajectories(pythia, nsteps, ntot_particles):
                 px[i][j] = p.px()
                 py[i][j] = p.py()
                 pz[i][j] = p.pz()
-
 
     trajectories_info = {}
     for i in range(len(x)):
@@ -149,6 +147,7 @@ def get_total_number_of_particles_in_event(pythia):
     ntot_particles = pythia.event.size()  # total number of particles in the event
     return ntot_particles
 
+
 def analyse_starting_points_of_trajectories(trajectories_excluding_stationary):
     trajectory_starting_points = []
     for t in (trajectories_excluding_stationary):
@@ -180,13 +179,14 @@ if __name__ == '__main__':
     ntot_particles = get_total_number_of_particles_in_event(pythia)
     trajectories_info, trajectories_excluding_stationary = calculate_trajectories(pythia, nsteps, ntot_particles)
 
-    cylinder_radii = [((i/10)+0.5) for i in range(10)]
+    cylinder_radii = [((i / 10) + 0.5) for i in range(10)]
     print('cylinder_radii: ', cylinder_radii)
     # cylinder_radii = range(1,101,10)
 
     detection_points_of_all_layers = []
     for cylinder_radius in cylinder_radii:
-        detection_points = calculate_detection_points(cylinder_radius, cylinder_height, trajectories_excluding_stationary)
+        detection_points = calculate_detection_points(cylinder_radius, cylinder_height,
+                                                      trajectories_excluding_stationary)
         detection_points_of_all_layers.append(detection_points)
 
     output_info = {}
