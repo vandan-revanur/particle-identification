@@ -2,6 +2,8 @@ import pythia8
 import json
 import numpy as np
 from datetime import datetime
+import configparser
+
 '''
 Pythia coordinate axes convention:
 The cylinder axis is in z direction(+z outside of screen), +ve x axis to the right , +ve y axis upwards
@@ -112,9 +114,9 @@ def calculate_trajectories(pythia, nsteps, ntot_particles):
     return trajectories_info, trajectories_excluding_stationary
 
 
-def init():
+def init(config_filepath):
     pythia = pythia8.Pythia()
-    pythia.readFile("conf.cmd")
+    pythia.readFile(config_filepath)
 
     # Initialize the event generation
     pythia.init()
@@ -166,11 +168,12 @@ def analyse_starting_points_of_trajectories(trajectories_excluding_stationary):
 
 if __name__ == '__main__':
     # Initialize Pythia8 with default settings
-    pythia = init()
-
+    config_filepath = "conf.cmd"
     nsteps = 100  # number of steps to simulate
     cylinder_height = 10
     EXPT_ID = 1
+
+    pythia = init(config_filepath)
 
     ntot_particles = get_total_number_of_particles_in_event(pythia)
     trajectories_info, trajectories_excluding_stationary = calculate_trajectories(pythia, nsteps, ntot_particles)
@@ -192,6 +195,11 @@ if __name__ == '__main__':
     date_time = datetime.today().isoformat(sep=" ", timespec="seconds")
     output_info['metadata']['date_time'] = date_time
     output_info['metadata']['experiment_id'] = EXPT_ID
+
+    with open(config_filepath, 'r') as conf:
+        config_data = conf.readlines()
+
+    output_info['metadata']['config_data'] = config_data
 
     with open('out/detection_points.json', 'w') as fp:
         json.dump(output_info, fp)
