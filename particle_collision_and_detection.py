@@ -19,7 +19,7 @@ The cylinder axis is in z direction(+z outside of screen), +ve x axis to the rig
    z
 '''
 
-def cylinder_intersection2(trajectory, cylinder_radius, cylinder_height):
+def cylinder_intersection(trajectory, cylinder_radius, cylinder_height):
   # assuming coordinate system: y - vertical, x - horizotal, z - beam direction
 
   # equation of line in x-y plane: y = ax + b
@@ -55,42 +55,6 @@ def cylinder_intersection2(trajectory, cylinder_radius, cylinder_height):
   return [x,y,z]
 
 
-
-def cylinder_intersection(trajectory, cylinder_radius, cylinder_height):
-    # Check if the trajectory has at least two points
-    if len(trajectory) < 2:
-        return None
-
-    # Calculate the velocity of the particle
-    particle_pos = trajectory[-2]
-    particle_vel = trajectory[-1] - particle_pos
-
-
-    # These are the coefficients for a cylinder whose axis is in z direction(+z outside of screen) ,
-    # +ve x axis to the right , +ve y axis upwards
-    # Calculate the coefficients for the quadratic equation
-    a = particle_vel.dot(particle_vel) - (particle_vel[2] ** 2)
-    b = 2 * (particle_pos.dot(particle_vel) - cylinder_radius * particle_vel[0] - cylinder_radius * particle_vel[1])
-    c = particle_pos.dot(particle_pos) - (cylinder_radius**2) - (particle_pos[2] - cylinder_height/2)**2
-
-
-    # Calculate the solutions to the quadratic equation
-    discriminant = b**2 - 4*a*c
-    if discriminant < 0:
-        raise ValueError("Particle trajectory does not intersect cylinder")
-    elif discriminant == 0:
-        t = -b / (2*a)
-        intersection_point = particle_pos + t * particle_vel
-        return intersection_point
-    else:
-        t1 = (-b + np.sqrt(discriminant)) / (2*a)
-        t2 = (-b - np.sqrt(discriminant)) / (2*a)
-
-        # Select the intersection point that is closest to the particle position
-        intersection_points = [particle_pos + t1 * particle_vel, particle_pos + t2 * particle_vel]
-        distances = [np.linalg.norm(intersection_points[0] - particle_pos), np.linalg.norm(intersection_points[1] - particle_pos)]
-        closest_index = np.argmin(distances)
-        return intersection_points[closest_index]
 
 
 def calculate_trajectories(pythia, nsteps, ntot_particles):
@@ -173,7 +137,7 @@ def init():
 def calculate_detection_points(cylinder_radius, cylinder_height, trajectories_excluding_stationary):
     detection_points = []
     for trajectory in trajectories_excluding_stationary:
-        intersection_point = cylinder_intersection2(trajectory, cylinder_radius, cylinder_height)
+        intersection_point = cylinder_intersection(trajectory, cylinder_radius, cylinder_height)
         detection_points.append(intersection_point)
 
     # print('detection_points: ',detection_points)
