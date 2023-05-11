@@ -1,7 +1,7 @@
 import pythia8
 import json
 import numpy as np
-
+from datetime import datetime
 '''
 Pythia coordinate axes convention:
 The cylinder axis is in z direction(+z outside of screen), +ve x axis to the right , +ve y axis upwards
@@ -175,6 +175,7 @@ if __name__ == '__main__':
 
     nsteps = 100  # number of steps to simulate
     cylinder_height = 10
+    EXPT_ID = 1
 
     ntot_particles = get_total_number_of_particles_in_event(pythia)
     trajectories_info, trajectories_excluding_stationary = calculate_trajectories(pythia, nsteps, ntot_particles)
@@ -189,9 +190,13 @@ if __name__ == '__main__':
                                                       trajectories_excluding_stationary)
         detection_points_of_all_layers.append(detection_points)
 
-    output_info = {}
+    output_info = {'data':{}, 'metadata':{}}
     for idx, (rad, dps) in enumerate(zip(cylinder_radii, detection_points_of_all_layers)):
-        output_info[idx] = {'detection_points': dps.tolist(), 'cylinder_radius_meters': rad}
+        output_info['data'][idx] = {'detection_points': dps.tolist(), 'cylinder_radius_meters': rad}
+
+    date_time = datetime.today().isoformat(sep=" ", timespec="seconds")
+    output_info['metadata']['date_time'] = date_time
+    output_info['metadata']['experiment_id'] = EXPT_ID
 
     with open('out/detection_points.json', 'w') as fp:
         json.dump(output_info, fp)
