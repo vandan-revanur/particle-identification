@@ -114,12 +114,7 @@ def calculate_trajectories(pythia, nsteps, ntot_particles):
 
 def init():
     pythia = pythia8.Pythia()
-    pythia.readString("Beams:eCM = 13000.")  # center-of-mass energy
-    pythia.readString("HardQCD:all = on")  # turn on hard QCD processes
-    pythia.readString("Random:seed = 0")  # set random seed to 0
-    # set radius and length of cylindrical detector
-    pythia.readString("ParticleDecays:Rmax = 2.0")
-    pythia.readString("ParticleDecays:Zmax = 5.0")
+    pythia.readFile("conf.cmd")
 
     # Initialize the event generation
     pythia.init()
