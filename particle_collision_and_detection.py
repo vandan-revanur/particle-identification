@@ -19,6 +19,43 @@ The cylinder axis is in z direction(+z outside of screen), +ve x axis to the rig
    z
 '''
 
+def cylinder_intersection2(trajectory, cylinder_radius, cylinder_height):
+  # assuming coordinate system: y - vertical, x - horizotal, z - beam direction
+
+  # equation of line in x-y plane: y = ax + b
+  a = (trajectory[-1][1] - trajectory[0][1])/(trajectory[-1][0] - trajectory[0][0])
+  b = trajectory[0][1] - a*trajectory[0][0]
+  # equation of cylinder in x-y: x^2 + y^2 = r
+  # intersection of cylinder and line in x-y: (a^2+1)x^2 + 2abx + b^2-r^2 = 0 -> Ax^2 + Bx + C = 0
+  A = a**2 + 1
+  B = 2*a*b
+  C = b**2 - cylinder_radius**2
+
+  delta = B**2 - 4*A*C
+  x = 0
+  if delta < 0:
+    raise ValueError("Particle trajectory does not intersect cylinder")
+  elif delta == 0:
+    x = -1*B/(2*A) 
+  else:
+    x = (-1*B + np.sqrt(delta))/(2*A)
+    if(trajectory[-1][0] - trajectory[0][0] < 0 and x > 0):
+      x = (-1*B - np.sqrt(delta))/(2*A)
+    if(trajectory[-1][0] - trajectory[0][0] > 0 and x < 0):
+      x = (-1*B - np.sqrt(delta))/(2*A)
+   
+  y = a*x + b
+
+  # equation of trajectory in y-z plane: y = cz + d
+  c = (trajectory[-1][1] - trajectory[0][1])/(trajectory[-1][2] - trajectory[0][2])
+  d = trajectory[0][1] - a*trajectory[0][2]
+  
+  z = (y - d)/c 
+
+  return [x,y,z]
+
+
+
 def cylinder_intersection(trajectory, cylinder_radius, cylinder_height):
     # Check if the trajectory has at least two points
     if len(trajectory) < 2:
@@ -136,7 +173,7 @@ def init():
 def calculate_detection_points(cylinder_radius, cylinder_height, trajectories_excluding_stationary):
     detection_points = []
     for trajectory in trajectories_excluding_stationary:
-        intersection_point = cylinder_intersection(trajectory, cylinder_radius, cylinder_height)
+        intersection_point = cylinder_intersection2(trajectory, cylinder_radius, cylinder_height)
         detection_points.append(intersection_point)
 
     # print('detection_points: ',detection_points)
