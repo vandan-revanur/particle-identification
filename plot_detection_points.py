@@ -8,8 +8,10 @@ os.makedirs('img', exist_ok=True)
 with open('out/detection_points.json', 'r') as json_file:
     detection_points_data = json.load(json_file)
 
+
+data = detection_points_data['data']
 detection_point_coords = []
-for idx, info in detection_points_data.items():
+for idx, info in data.items():
     detection_point_coords.extend(info['detection_points'])
 
 detection_point_x_coords_2d = []
